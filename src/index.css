@@ -1,0 +1,237 @@
+@import "tailwindcss";
+
+/* ==========================================
+   BhoomiAI Design System - Tailwind v4
+   ========================================== */
+
+@theme {
+  /* Navy / Government Blues */
+  --color-navy-950: #080f1f;
+  --color-navy-900: #0c1b3a;
+  --color-navy-800: #132a52;
+  --color-navy-700: #1a3a6b;
+  --color-navy-600: #234e8a;
+  --color-navy-500: #2d64aa;
+
+  /* Primary / Gov Blue */
+  --color-gov-blue: #1e40af;
+  --color-gov-blue-light: #3b82f6;
+  --color-gov-blue-dark: #1e3a8a;
+
+  /* AI Purple */
+  --color-ai-purple: #6d28d9;
+  --color-ai-purple-light: #8b5cf6;
+  --color-ai-purple-dark: #5b21b6;
+
+  /* Semantic */
+  --color-verified: #16a34a;
+  --color-verified-light: #22c55e;
+  --color-verified-bg: #f0fdf4;
+  --color-pending: #d97706;
+  --color-pending-light: #f59e0b;
+  --color-pending-bg: #fffbeb;
+  --color-error: #dc2626;
+  --color-error-light: #ef4444;
+  --color-error-bg: #fef2f2;
+
+  /* Surface */
+  --color-surface-primary: #ffffff;
+  --color-surface-secondary: #f8fafc;
+  --color-surface-tertiary: #f1f5f9;
+  --color-surface-hover: #e2e8f0;
+  --color-border-default: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  /* Text */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  /* Fonts */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Shadows */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.08);
+  --shadow-dropdown: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-modal: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+/* ==========================================
+   Base Styles
+   ========================================== */
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    color: var(--color-text-primary);
+    background-color: var(--color-surface-secondary);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+}
+
+/* ==========================================
+   Custom Utilities
+   ========================================== */
+
+@utility card {
+  background-color: var(--color-surface-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-card);
+}
+
+@utility card-hover {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  &:hover {
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--color-border-strong);
+  }
+}
+
+@utility gov-gradient {
+  background: linear-gradient(135deg, var(--color-navy-900) 0%, var(--color-navy-800) 50%, var(--color-navy-700) 100%);
+}
+
+@utility sidebar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.15s ease;
+  &:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+@utility sidebar-nav-active {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+@utility badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+  line-height: 1.25rem;
+}
+
+@utility badge-verified {
+  background-color: var(--color-verified-bg);
+  color: var(--color-verified);
+  border: 1px solid #bbf7d0;
+}
+
+@utility badge-pending {
+  background-color: var(--color-pending-bg);
+  color: var(--color-pending);
+  border: 1px solid #fde68a;
+}
+
+@utility badge-error {
+  background-color: var(--color-error-bg);
+  color: var(--color-error);
+  border: 1px solid #fecaca;
+}
+
+@utility badge-ai {
+  background-color: #f5f3ff;
+  color: var(--color-ai-purple);
+  border: 1px solid #ddd6fe;
+}
+
+@utility table-header {
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface-tertiary);
+  text-align: left;
+  white-space: nowrap;
+}
+
+@utility table-cell {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border-default);
+  white-space: nowrap;
+}
+
+@utility input-base {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.375rem;
+  background-color: var(--color-surface-primary);
+  color: var(--color-text-primary);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  &:focus {
+    outline: none;
+    border-color: var(--color-gov-blue);
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+  }
+  &::placeholder {
+    color: var(--color-text-tertiary);
+  }
+}
+
+/* ==========================================
+   Leaflet Overrides
+   ========================================== */
+
+.leaflet-container {
+  font-family: var(--font-sans) !important;
+}
+
+/* ==========================================
+   Animations
+   ========================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@utility animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@utility animate-slide-in {
+  animation: slideInRight 0.25s ease-out;
+}
+
+@utility animate-pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
