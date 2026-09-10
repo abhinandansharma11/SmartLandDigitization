@@ -332,7 +332,7 @@ export const CitizenApplicationDetail: React.FC = () => {
         </div>
 
         <h3 className="text-sm font-semibold text-text-primary mb-4">Application Timeline</h3>
-        <Timeline items={app.timeline} />
+        <Timeline items={app.timeline.map(item => ({ ...item, label: item.step }))} />
       </div>
     </div>
   );
