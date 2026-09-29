@@ -67,7 +67,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({ children, perm
 export const GovernmentRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuthStore();
   if (!user || !GOVERNMENT_ROLES.includes(user.role)) {
-    return <Navigate to="/citizen" replace />;
+    return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
 };

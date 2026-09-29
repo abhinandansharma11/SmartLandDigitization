@@ -16,7 +16,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button: React.FC<ButtonProps> = ({
   variant = 'primary', size = 'md', loading, icon, children, className = '', disabled, ...props
 }) => {
-  const base = 'inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const base = 'inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed interactive-control';
   const variants: Record<string, string> = {
     primary: 'bg-gov-blue text-white hover:bg-gov-blue-dark focus:ring-gov-blue',
     secondary: 'bg-white text-text-primary border border-border-default hover:bg-surface-tertiary focus:ring-gray-300',

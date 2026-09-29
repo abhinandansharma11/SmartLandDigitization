@@ -42,20 +42,12 @@ export const CitizenLogin: React.FC = () => {
             <Input label="Password" type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} icon={<Lock className="w-4 h-4" />} placeholder="Enter password" required />
             <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-[38px] text-text-tertiary"><EyeOff className="w-4 h-4" /></button>
           </div>
-          <div className="flex justify-between text-sm">
-            <a href="#" className="text-gov-blue hover:underline">Login with OTP</a>
-            <a href="#" className="text-gov-blue hover:underline">Forgot password?</a>
-          </div>
           <Button type="submit" className="w-full" loading={isLoading}>Login</Button>
         </form>
 
         <p className="text-sm text-text-secondary text-center mt-4">
           Don't have an account? <Link to="/citizen/register" className="text-gov-blue hover:underline">Register here</Link>
         </p>
-
-        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
-          <p className="text-xs font-medium text-amber-800">Demo: ram.kumar@email.com / citizen123</p>
-        </div>
 
         <div className="mt-4 text-center">
           <Link to="/login" className="text-xs text-text-tertiary hover:text-gov-blue">Government Employee Login →</Link>

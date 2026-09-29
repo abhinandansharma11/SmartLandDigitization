@@ -5,24 +5,30 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
-import { Cpu, Menu, X, User, LogOut, Bell } from 'lucide-react';
-import { Button } from '../components/ui';
+import { Cpu, Menu, X, LogOut, Bell, ShieldCheck, House } from 'lucide-react';
 
 export const CitizenLayout: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const handleLogout = () => { logout(); navigate('/citizen'); };
+  const handleLogout = () => { logout(); navigate('/'); };
 
   return (
-    <div className="min-h-screen bg-surface-secondary flex flex-col">
+    <div className="app-shell min-h-screen bg-surface-secondary flex flex-col">
       {/* Navbar */}
       <header className="bg-white border-b border-border-default sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <NavLink to="/citizen" className="flex items-center gap-3">
+            <NavLink
+              to="/"
+              aria-label="Home"
+              title="Home"
+              className="mr-4 flex h-9 w-11 shrink-0 items-center justify-center rounded-xl bg-navy-950 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-navy-900 hover:shadow-md"
+            >
+              <House className="h-4 w-4" strokeWidth={2.4} />
+            </NavLink>
+            <NavLink to="/" className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-navy-800 flex items-center justify-center">
                 <Cpu className="w-5 h-5 text-white" />
               </div>
@@ -34,13 +40,10 @@ export const CitizenLayout: React.FC = () => {
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-1">
-              <NavLink to="/citizen" end className={({ isActive }) => `px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? 'text-gov-blue bg-blue-50' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'}`}>Home</NavLink>
-              <NavLink to="/citizen/search" className={({ isActive }) => `px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? 'text-gov-blue bg-blue-50' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'}`}>Services</NavLink>
-              <NavLink to="/citizen/search" className={({ isActive }) => `px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? 'text-gov-blue bg-blue-50' : 'text-text-secondary hover:text-text-primary hover:bg-surface-tertiary'}`}>Know Your Land</NavLink>
             </nav>
 
             {/* Right side */}
-            <div className="flex items-center gap-3">
+            <div className="ml-auto flex items-center gap-3">
               {isAuthenticated && user ? (
                 <>
                   <button className="p-2 rounded-md hover:bg-surface-tertiary text-text-secondary relative">
@@ -58,8 +61,14 @@ export const CitizenLayout: React.FC = () => {
                 </>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => navigate('/citizen/login')}>Login</Button>
-                  <Button variant="primary" size="sm" onClick={() => navigate('/citizen/register')}>Register</Button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="inline-flex items-center gap-2 rounded-full bg-gov-blue px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-gov-blue-dark hover:shadow-md"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Officer Login
+                  </button>
                 </div>
               )}
 
@@ -75,9 +84,7 @@ export const CitizenLayout: React.FC = () => {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-border-default bg-white animate-fade-in">
             <nav className="px-4 py-3 space-y-1">
-              <NavLink to="/citizen" end onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded text-sm text-text-secondary hover:bg-surface-tertiary">Home</NavLink>
-              <NavLink to="/citizen/search" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded text-sm text-text-secondary hover:bg-surface-tertiary">Services</NavLink>
-              <NavLink to="/citizen/certificates" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 rounded text-sm text-text-secondary hover:bg-surface-tertiary">Certificates</NavLink>
+              <NavLink to="/" end onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded text-sm text-text-secondary hover:bg-surface-tertiary"><House className="h-4 w-4" /> Home</NavLink>
             </nav>
           </div>
         )}
@@ -89,7 +96,7 @@ export const CitizenLayout: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-navy-900 text-white/70 py-8 mt-auto">
+      <footer className="site-footer bg-navy-950 text-white py-8 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
@@ -98,14 +105,14 @@ export const CitizenLayout: React.FC = () => {
                 <span className="font-bold text-white">BhoomiAI</span>
               </div>
               <p className="text-sm">Intelligent Land Record Digitization & Validation System</p>
-              <p className="text-xs mt-2 text-white/40">Prototype · Smart India Hackathon · PS 26018</p>
+              <p className="text-xs mt-2 text-white/40">Digital land records and applications</p>
             </div>
             <div>
               <h4 className="text-sm font-semibold text-white mb-3">Quick Links</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition-colors">Search Land Records</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Track Application</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Download Certificates</a></li>
+                <li><NavLink to="/search" className="hover:text-white transition-colors">Search Land Records</NavLink></li>
+                <li><NavLink to="/track-application" className="hover:text-white transition-colors">Track Application</NavLink></li>
+                <li><NavLink to="/certificates" className="hover:text-white transition-colors">Download Certificates</NavLink></li>
               </ul>
             </div>
             <div>
@@ -118,7 +125,7 @@ export const CitizenLayout: React.FC = () => {
             </div>
           </div>
           <div className="border-t border-white/10 mt-8 pt-4 text-xs text-white/40 text-center">
-            © 2026 BhoomiAI · Government of India · All Rights Reserved · Integration Ready (Prototype)
+            © 2026 BhoomiAI · Digital Land Records Platform · All Rights Reserved
           </div>
         </div>
       </footer>

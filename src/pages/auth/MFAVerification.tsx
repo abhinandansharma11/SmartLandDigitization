@@ -96,9 +96,6 @@ const MFAVerification: React.FC = () => {
         </Button>
       </form>
 
-      <p className="text-xs text-text-tertiary text-center mt-6">
-        For demo: enter any 6 digits (e.g. 123456)
-      </p>
     </div>
   );
 };

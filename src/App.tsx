@@ -3,22 +3,21 @@
 // ==========================================
 
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
 import { useAuthStore } from './store/auth.store';
 import { GOVERNMENT_ROLES } from './types/auth';
 
 // Auth guards
-import { ProtectedRoute, GovernmentRoute, CitizenRoute } from './components/auth';
+import { ProtectedRoute, GovernmentRoute } from './components/auth';
 
 // Layouts
 import { AuthLayout } from './layouts/AuthLayout';
 import { GovernmentLayout } from './layouts/GovernmentLayout';
-import { CitizenLayout } from './layouts/CitizenLayout';
 
 // Auth pages
 import GovernmentLogin from './pages/auth/GovernmentLogin';
 import MFAVerification from './pages/auth/MFAVerification';
-import { CitizenLogin, CitizenRegister } from './pages/auth/CitizenAuth';
 
 // Government pages
 import Dashboard from './pages/government/Dashboard';
@@ -29,7 +28,7 @@ import { LandRecordsList, LandRecordDetail } from './pages/government/LandRecord
 import { VerificationQueue, VerificationDetail } from './pages/government/Verification';
 import { Reports, AuditLogs, UserManagement, SettingsPage } from './pages/government/OtherPages';
 
-// Citizen pages
+// Public land-record portal
 import {
   CitizenHome,
   CitizenSearch,
@@ -38,34 +37,43 @@ import {
   CitizenApplicationDetail,
   CitizenCertificates,
 } from './pages/citizen/CitizenPages';
-
-// Demo switcher
-import { DemoSwitcher } from './components/DemoSwitcher';
-
-// Smart redirect based on auth state
-const RootRedirect: React.FC = () => {
-  const { isAuthenticated, user } = useAuthStore();
-  if (!isAuthenticated || !user) return <Navigate to="/citizen" replace />;
-  if (GOVERNMENT_ROLES.includes(user.role)) return <Navigate to="/dashboard" replace />;
-  return <Navigate to="/citizen" replace />;
-};
+import { CitizenLayout } from './layouts/CitizenLayout';
 
 // Redirect already-authenticated users away from login
 const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user, mfaPending } = useAuthStore();
   if (isAuthenticated && user && !mfaPending) {
     if (GOVERNMENT_ROLES.includes(user.role)) return <Navigate to="/dashboard" replace />;
-    return <Navigate to="/citizen" replace />;
   }
   return <>{children}</>;
 };
 
 const App: React.FC = () => {
+  const location = useLocation();
+
   return (
+    <MotionConfig reducedMotion="user">
     <>
-      <Routes>
-        {/* Root redirect */}
-        <Route path="/" element={<RootRedirect />} />
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={location.pathname}
+          className="route-transition"
+          initial={{ opacity: 0, x: 8 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -8 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        >
+      <Routes location={location}>
+        {/* Public land-record portal */}
+        <Route element={<CitizenLayout />}>
+          <Route path="/" element={<CitizenHome />} />
+          <Route path="/search" element={<CitizenSearch />} />
+          <Route path="/land-record/:id" element={<CitizenRecordView />} />
+          <Route path="/track-application" element={<CitizenApplications />} />
+          <Route path="/track-application/:id" element={<CitizenApplicationDetail />} />
+          <Route path="/certificates" element={<CitizenCertificates />} />
+          <Route path="/map" element={<CitizenSearch />} />
+        </Route>
 
         {/* ==========================================
             Authentication Routes (AuthLayout)
@@ -81,24 +89,6 @@ const App: React.FC = () => {
           />
           <Route path="/mfa" element={<MFAVerification />} />
         </Route>
-
-        {/* Citizen auth — uses its own simple layout (no AuthLayout sidebar) */}
-        <Route
-          path="/citizen/login"
-          element={
-            <AuthRedirect>
-              <CitizenLogin />
-            </AuthRedirect>
-          }
-        />
-        <Route
-          path="/citizen/register"
-          element={
-            <AuthRedirect>
-              <CitizenRegister />
-            </AuthRedirect>
-          }
-        />
 
         {/* ==========================================
             Government Portal Routes
@@ -127,32 +117,15 @@ const App: React.FC = () => {
         </Route>
 
         {/* ==========================================
-            Citizen Portal Routes
-            ========================================== */}
-        <Route
-          element={
-            <CitizenRoute>
-              <CitizenLayout />
-            </CitizenRoute>
-          }
-        >
-          <Route path="/citizen" element={<CitizenHome />} />
-          <Route path="/citizen/search" element={<CitizenSearch />} />
-          <Route path="/citizen/records/:id" element={<CitizenRecordView />} />
-          <Route path="/citizen/applications" element={<CitizenApplications />} />
-          <Route path="/citizen/applications/:id" element={<CitizenApplicationDetail />} />
-          <Route path="/citizen/certificates" element={<CitizenCertificates />} />
-        </Route>
-
-        {/* ==========================================
             Fallback — redirect unknown routes
             ========================================== */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+        </motion.div>
+      </AnimatePresence>
 
-      {/* Demo role switcher — visible in all views for SIH presentation */}
-      <DemoSwitcher />
     </>
+    </MotionConfig>
   );
 };
 

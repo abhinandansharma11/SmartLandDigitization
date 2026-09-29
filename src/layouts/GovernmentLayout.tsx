@@ -13,6 +13,7 @@ import {
   ScrollText, Users, Settings, Bell, Search, LogOut, ChevronLeft,
   Menu, Shield, MapPin, ChevronDown, User, Cpu,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface NavItem {
   path: string;
@@ -58,7 +59,7 @@ export const GovernmentLayout: React.FC = () => {
   const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <div className="flex h-screen bg-surface-secondary">
+    <div className="app-shell flex h-screen bg-surface-secondary">
       {/* Sidebar */}
       <aside className={`gov-gradient flex flex-col transition-all duration-200 ${sidebarCollapsed ? 'w-16' : 'w-64'} flex-shrink-0`}>
         {/* Logo */}
@@ -75,16 +76,27 @@ export const GovernmentLayout: React.FC = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-2 py-3 space-y-1 overflow-y-auto relative">
           {filteredNav.map(item => (
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive }) => `sidebar-nav ${isActive ? 'sidebar-nav-active' : ''}`}
+              className={({ isActive }) => `sidebar-nav relative ${isActive ? 'text-white' : ''}`}
               title={sidebarCollapsed ? item.label : undefined}
             >
-              {item.icon}
-              {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <motion.div
+                      layoutId="sidebar-active-indicator"
+                      className="absolute inset-0 bg-white/10 rounded-md -z-10 shadow-[inset_3px_0_0_0_#14b8a6]"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  {item.icon}
+                  {!sidebarCollapsed && <span className="truncate relative z-10">{item.label}</span>}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -202,8 +214,9 @@ export const GovernmentLayout: React.FC = () => {
         )}
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <Outlet />
+        <main className="ambient-main flex-1 overflow-y-auto p-6">
+          <div className="ambient-shapes" aria-hidden="true"><span /><span /><span /></div>
+          <div className="relative z-10"><Outlet /></div>
         </main>
       </div>
     </div>

@@ -203,6 +203,8 @@ export const MOCK_USERS: User[] = [
 ];
 
 export const DEMO_PASSWORDS: Record<string, string> = {
+  'ro.demo@bhoomiai.gov.in': 'demo123',
+  'district.demo@bhoomiai.gov.in': 'demo123',
   'anita.sharma@gov.in': 'admin123',
   'rajesh.singh@amethi.gov.in': 'admin123',
   'priya.mishra@amethi.gov.in': 'admin123',
@@ -219,7 +221,12 @@ export const DEMO_PASSWORDS: Record<string, string> = {
 };
 
 export function findUserByCredentials(emailOrId: string): User | undefined {
+  const demoAliases: Record<string, string> = {
+    'ro.demo@bhoomiai.gov.in': 'priya.mishra@amethi.gov.in',
+    'district.demo@bhoomiai.gov.in': 'rajesh.singh@amethi.gov.in',
+  };
+  const resolvedEmail = demoAliases[emailOrId] || emailOrId;
   return MOCK_USERS.find(
-    u => u.email === emailOrId || u.employeeId === emailOrId
+    u => u.email === resolvedEmail || u.employeeId === emailOrId
   );
 }

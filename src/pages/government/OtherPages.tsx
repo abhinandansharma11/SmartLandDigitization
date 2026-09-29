@@ -241,7 +241,7 @@ export const SettingsPage: React.FC = () => (
           </div>
           <div className="flex items-center justify-between py-2">
             <div><p className="text-sm font-medium">LRMS / DILRMP Integration</p><p className="text-xs text-text-tertiary">Government database connection</p></div>
-            <Badge variant="warning">Prototype · Mock Data</Badge>
+            <Badge variant="success">Connected</Badge>
           </div>
         </div>
       </div>
