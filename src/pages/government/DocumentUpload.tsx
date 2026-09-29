@@ -8,11 +8,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   UploadCloud, FileText, FileImage, ShieldCheck, Search, ShieldAlert,
   CheckCircle2, ArrowRight, X, Scan,
-  Check, Shield, ChevronRight, AlertTriangle, Play, Sparkles, Clock3, Languages, FileCheck2
+  Check, Shield, ChevronRight, AlertTriangle, Play, Sparkles, Clock3, Languages, FileCheck2,
+  Trash2, Plus, RotateCcw, LoaderCircle
 } from 'lucide-react';
 import { Button } from '../../components/ui';
 
 type ProcessState = 'select' | 'pipeline' | 'review' | 'success';
+type UploadMode = 'single' | 'bulk';
+type BulkStatus = 'ready' | 'processing' | 'completed' | 'manual-review' | 'not-identified' | 'failed';
+
+type BulkFile = {
+  id: string;
+  file: File;
+  status: BulkStatus;
+  record: PresetRecord | null;
+};
 
 type PresetRecord = {
   khasra: string;
@@ -73,6 +83,8 @@ const PROCESS_STAGES = [
   'Preparing it for review',
 ];
 
+const MAX_BULK_FILES = 50;
+
 const getImageFingerprint = async (file: File): Promise<string> => {
   const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
@@ -127,13 +139,33 @@ export const DocumentUpload: React.FC = () => {
   const [isFastForward, setIsFastForward] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastType, setToastType] = useState<'verified' | 'manual'>('verified');
+  const [uploadMode, setUploadMode] = useState<UploadMode>('single');
+  const [bulkFiles, setBulkFiles] = useState<BulkFile[]>([]);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [bulkProcessedCount, setBulkProcessedCount] = useState(0);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [selectedBulkId, setSelectedBulkId] = useState<string | null>(null);
 
   // Drag and drop state
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Handle file selection
+  const validateFile = (file: File): string | null => {
+    const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isImage && !isPdf) return 'Please choose an image or PDF file.';
+    if (file.size > 10 * 1024 * 1024) return `${file.name} is larger than 10MB.`;
+    return null;
+  };
+
   const handleFile = async (file: File) => {
+    const validationError = validateFile(file);
+    if (validationError) {
+      setBulkError(validationError);
+      return;
+    }
+    setBulkError(null);
     setSelectedFile(file);
     setSelectedRecord(null);
     if (file.type.startsWith('image/')) {
@@ -141,12 +173,108 @@ export const DocumentUpload: React.FC = () => {
       try {
         setSelectedRecord(await identifyPresetRecord(file));
       } catch (error) {
-        console.error('Unable to identify the uploaded paper image.', error);
+        if (error instanceof Error) console.error('Unable to identify the uploaded paper image.', error.message);
       }
     } else {
       setFilePreview(null); // Will show generic PDF/Document icon
     }
     setStep('pipeline');
+  };
+
+  const addBulkFiles = (files: FileList | File[]) => {
+    const incoming = Array.from(files);
+    const validFiles: BulkFile[] = [];
+    const errors: string[] = [];
+    const availableSlots = Math.max(0, MAX_BULK_FILES - bulkFiles.length);
+    if (incoming.length > availableSlots) {
+      errors.push(`You can upload up to ${MAX_BULK_FILES} documents at a time.`);
+    }
+    incoming.slice(0, availableSlots).forEach(file => {
+      const validationError = validateFile(file);
+      if (validationError) errors.push(validationError);
+      else if (!bulkFiles.some(item => item.file.name === file.name && item.file.size === file.size)) {
+        validFiles.push({ id: `${file.name}-${file.lastModified}-${Math.random()}`, file, status: 'ready', record: null });
+      }
+    });
+    setBulkFiles(current => {
+      const existingKeys = new Set(current.map(item => `${item.file.name}-${item.file.size}`));
+      const uniqueFiles = validFiles.filter(item => {
+        const key = `${item.file.name}-${item.file.size}`;
+        if (existingKeys.has(key)) return false;
+        existingKeys.add(key);
+        return true;
+      });
+      return [...current, ...uniqueFiles];
+    });
+    setBulkError(errors.length ? errors.join(' ') : null);
+  };
+
+  const processBulkFiles = async () => {
+    if (!bulkFiles.length || bulkProcessing) return;
+    setBulkProcessing(true);
+    setBulkProcessedCount(0);
+    setBulkFiles(current => current.map(item => ({ ...item, status: 'ready', record: null })));
+    const reviewItems: BulkFile[] = [];
+    for (let index = 0; index < bulkFiles.length; index += 1) {
+      const item = bulkFiles[index];
+      setBulkFiles(current => current.map(file => file.id === item.id ? { ...file, status: 'processing' } : file));
+      try {
+        const record = item.file.type.startsWith('image/') ? await identifyPresetRecord(item.file) : null;
+        const processedItem = { ...item, record, status: record ? 'completed' as const : 'not-identified' as const };
+        reviewItems.push(processedItem);
+        setBulkFiles(current => current.map(file => file.id === item.id ? {
+          ...file,
+          record,
+          status: record ? 'completed' : 'not-identified',
+        } : file));
+      } catch (error) {
+        if (error instanceof Error) console.error(`Unable to process ${item.file.name}.`, error.message);
+        const failedItem = { ...item, record: null, status: 'failed' as const };
+        reviewItems.push(failedItem);
+        setBulkFiles(current => current.map(file => file.id === item.id ? { ...file, status: failedItem.status } : file));
+      }
+      setBulkProcessedCount(index + 1);
+    }
+    setBulkProcessing(false);
+    const firstReviewItem = reviewItems[0];
+    if (firstReviewItem) {
+      setSelectedBulkId(firstReviewItem.id);
+      setSelectedFile(firstReviewItem.file);
+      setSelectedRecord(firstReviewItem.record);
+      setFilePreview(firstReviewItem.file.type.startsWith('image/') ? URL.createObjectURL(firstReviewItem.file) : null);
+      setStep('review');
+    }
+  };
+
+  const openBulkReview = (item: BulkFile) => {
+    if (item.status === 'ready' || item.status === 'processing') return;
+    setSelectedBulkId(item.id);
+    setSelectedFile(item.file);
+    setSelectedRecord(item.record);
+    setFilePreview(item.file.type.startsWith('image/') ? URL.createObjectURL(item.file) : null);
+    setStep('review');
+  };
+
+  const advanceBulkReview = (currentId: string) => {
+    const nextItem = bulkFiles.find(item => (
+      item.id !== currentId &&
+      ['completed', 'not-identified', 'failed'].includes(item.status)
+    ));
+    if (nextItem) {
+      openBulkReview(nextItem);
+      return;
+    }
+    setSelectedBulkId(null);
+    setSelectedFile(null);
+    setFilePreview(null);
+    setSelectedRecord(null);
+    setStep('select');
+  };
+
+  const onBulkDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files.length) addBulkFiles(e.dataTransfer.files);
   };
 
   const onDragOver = (e: React.DragEvent) => {
@@ -185,20 +313,41 @@ export const DocumentUpload: React.FC = () => {
 
   // Handle final approval
   const handleApprove = () => {
+    if (selectedBulkId) {
+      const currentId = selectedBulkId;
+      setBulkFiles(current => current.map(item => item.id === currentId ? { ...item, status: 'completed' } : item));
+      advanceBulkReview(currentId);
+    } else {
+      setStep('success');
+    }
     setToastType('verified');
-    setStep('success');
     setShowToast(true);
     setTimeout(() => setShowToast(false), 4000);
   };
 
   const handleManualReview = () => {
+    if (selectedBulkId) {
+      const currentId = selectedBulkId;
+      setBulkFiles(current => current.map(item => item.id === currentId ? { ...item, status: 'manual-review' } : item));
+      advanceBulkReview(currentId);
+    } else {
+      setStep('select');
+      setSelectedFile(null);
+      setFilePreview(null);
+      setSelectedRecord(null);
+    }
     setToastType('manual');
-    setStep('select');
-    setSelectedFile(null);
-    setFilePreview(null);
-    setSelectedRecord(null);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 4000);
+  };
+
+  const bulkSummary = bulkFiles.reduce<Record<BulkStatus, number>>((summary, item) => {
+    summary[item.status] += 1;
+    return summary;
+  }, { ready: 0, processing: 0, completed: 0, 'manual-review': 0, 'not-identified': 0, failed: 0 });
+
+  const sendBulkForReview = () => {
+    setBulkFiles(current => current.map(item => item.status === 'not-identified' ? { ...item, status: 'manual-review' } : item));
   };
 
   return (
@@ -243,9 +392,24 @@ export const DocumentUpload: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="card p-8 md:p-12 text-center"
+            className="card p-8 md:p-12"
           >
-            <div
+            <div className="mx-auto mb-8 flex max-w-md rounded-xl bg-surface-secondary p-1">
+              {(['single', 'bulk'] as UploadMode[]).map(mode => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => { setUploadMode(mode); setBulkError(null); }}
+                  className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+                    uploadMode === mode ? 'bg-white text-gov-blue shadow-sm' : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  {mode === 'single' ? 'Single document' : 'Bulk upload'}
+                </button>
+              ))}
+            </div>
+
+            {uploadMode === 'single' ? (<div
               onDragOver={onDragOver}
               onDragLeave={onDragLeave}
               onDrop={onDrop}
@@ -263,7 +427,7 @@ export const DocumentUpload: React.FC = () => {
               />
               <div className="w-20 h-20 rounded-full bg-gov-blue/10 flex items-center justify-center mb-4">
                 <UploadCloud className="w-10 h-10 text-gov-blue" />
-              </div>
+              </div>)
               <h3 className="text-lg font-bold text-text-primary mb-2">Drag & Drop Document Here</h3>
               <p className="text-sm text-text-secondary max-w-md mx-auto">
                 Supports scanned PDF, JPG, or PNG. Maximum file size 10MB. 
@@ -275,7 +439,125 @@ export const DocumentUpload: React.FC = () => {
                   Browse Files
                 </Button>
               </div>
+              {bulkError && <p className="mt-4 text-sm text-red-600">{bulkError}</p>}
             </div>
+            ) : (
+              <div className="space-y-6">
+                <div
+                  onDragOver={onDragOver}
+                  onDragLeave={onDragLeave}
+                  onDrop={onBulkDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-2xl p-10 cursor-pointer transition-all duration-300 flex flex-col items-center justify-center text-center ${
+                    isDragging ? 'border-gov-blue bg-gov-blue-50/50 scale-[1.02]' : 'border-border-strong hover:border-gov-blue hover:bg-surface-secondary'
+                  }`}
+                >
+                  <input
+                    type="file"
+                    className="hidden"
+                    ref={fileInputRef}
+                    multiple
+                    accept="image/*,.pdf"
+                    onChange={(e) => { if (e.target.files) addBulkFiles(e.target.files); e.currentTarget.value = ''; }}
+                  />
+                  <div className="w-20 h-20 rounded-full bg-gov-blue/10 flex items-center justify-center mb-4">
+                    <UploadCloud className="w-10 h-10 text-gov-blue" />
+                  </div>
+                  <h3 className="text-lg font-bold text-text-primary mb-2">Drop documents here</h3>
+                  <p className="text-sm text-text-secondary max-w-md">
+                    Add up to 50 JPG, PNG, or PDF files. Each file must be 10MB or smaller.
+                  </p>
+                  <Button onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="mt-8">
+                    <Plus className="mr-2 h-4 w-4" /> Add files
+                  </Button>
+                </div>
+
+                {bulkError && <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{bulkError}</p>}
+
+                {bulkFiles.length > 0 && (
+                  <div className="rounded-xl border border-border-default bg-white">
+                    <div className="flex items-center justify-between border-b border-border-default px-4 py-3">
+                      <div>
+                        <p className="font-semibold text-text-primary">{bulkFiles.length} document{bulkFiles.length === 1 ? '' : 's'} selected</p>
+                        <p className="text-xs text-text-tertiary">Estimated time: about {Math.max(1, Math.ceil(bulkFiles.length * 0.25))} minute{bulkFiles.length === 1 ? '' : 's'}</p>
+                      </div>
+                      <button type="button" onClick={() => setBulkFiles([])} className="text-sm font-semibold text-text-secondary hover:text-red-600">
+                        Clear all
+                      </button>
+                    </div>
+                    <div className="max-h-64 divide-y divide-border-default overflow-y-auto">
+                      {bulkFiles.map(item => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => openBulkReview(item)}
+                          disabled={item.status === 'ready' || item.status === 'processing'}
+                          className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
+                            item.status === 'processing' ? 'bg-gov-blue-50/60' :
+                            item.status !== 'ready' ? 'hover:bg-surface-secondary' : ''
+                          }`}
+                        >
+                          {item.file.type.startsWith('image/') ? <FileImage className="h-5 w-5 text-gov-blue" /> : <FileText className="h-5 w-5 text-gov-blue" />}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-text-primary">{item.file.name}</p>
+                            <p className="text-xs text-text-tertiary">{(item.file.size / 1024 / 1024).toFixed(2)} MB</p>
+                          </div>
+                          <span className={`text-xs font-semibold ${
+                            item.status === 'completed' ? 'text-verified' :
+                            item.status === 'failed' ? 'text-red-600' :
+                            item.status === 'not-identified' ? 'text-amber-700' :
+                            item.status === 'processing' ? 'text-gov-blue' : 'text-text-tertiary'
+                          }`}>
+                            {item.status === 'processing' ? 'Processing now' : item.status === 'not-identified' ? 'Not identified' : item.status.replace('-', ' ')}
+                          </span>
+                          {!bulkProcessing && <span
+                            role="button"
+                            aria-label={`Remove ${item.file.name}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setBulkFiles(current => current.filter(file => file.id !== item.id));
+                            }}
+                            className="rounded p-1 text-text-tertiary hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </span>}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex flex-col gap-3 border-t border-border-default px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-sm text-text-secondary">
+                        {bulkProcessing ? `Processed ${bulkProcessedCount} of ${bulkFiles.length}` : `${bulkSummary.completed} identified, ${bulkSummary['not-identified']} need review`}
+                      </p>
+                      <Button onClick={processBulkFiles} disabled={bulkProcessing || !bulkFiles.some(item => item.status === 'ready')}>
+                        {bulkProcessing ? <><LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : <><Play className="mr-2 h-4 w-4" /> Start bulk processing</>}
+                      </Button>
+                    </div>
+                    {!bulkProcessing && bulkSummary['not-identified'] > 0 && (
+                      <div className="border-t border-border-default px-4 py-3">
+                        <button type="button" onClick={sendBulkForReview} className="text-sm font-semibold text-gov-blue hover:underline">
+                          Send not identified documents for manual review
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {bulkFiles.length > 0 && !bulkProcessing && bulkProcessedCount === bulkFiles.length && (
+                  <div className="rounded-xl bg-surface-secondary p-4">
+                    <div className="mb-3 flex items-center gap-2 font-semibold text-text-primary"><CheckCircle2 className="h-5 w-5 text-verified" /> Bulk processing complete</div>
+                    <div className="grid grid-cols-2 gap-2 text-sm text-text-secondary sm:grid-cols-4">
+                      <span>Completed: {bulkSummary.completed}</span>
+                      <span>Not identified: {bulkSummary['not-identified']}</span>
+                      <span>Failed: {bulkSummary.failed}</span>
+                      <span>Manual review: {bulkSummary['manual-review']}</span>
+                    </div>
+                    <button type="button" onClick={() => { setBulkFiles([]); setBulkProcessedCount(0); }} className="mt-4 flex items-center gap-2 text-sm font-semibold text-gov-blue hover:underline">
+                      <RotateCcw className="h-4 w-4" /> Start another batch
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </motion.div>
         )}
 
