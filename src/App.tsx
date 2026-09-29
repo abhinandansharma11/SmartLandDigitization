@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
+import { MotionConfig } from 'framer-motion';
 import { useAuthStore } from './store/auth.store';
 import { GOVERNMENT_ROLES } from './types/auth';
 
@@ -21,6 +21,7 @@ import MFAVerification from './pages/auth/MFAVerification';
 
 // Government pages
 import Dashboard from './pages/government/Dashboard';
+import LiveProcessing from './pages/government/LiveProcessing';
 import DocumentUpload from './pages/government/DocumentUpload';
 import ProcessingWorkspace from './pages/government/ProcessingWorkspace';
 import GISMap from './pages/government/GISMap';
@@ -54,15 +55,6 @@ const App: React.FC = () => {
   return (
     <MotionConfig reducedMotion="user">
     <>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={location.pathname}
-          className="route-transition"
-          initial={{ opacity: 0, x: 8 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -8 }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        >
       <Routes location={location}>
         {/* Public land-record portal */}
         <Route element={<CitizenLayout />}>
@@ -103,6 +95,7 @@ const App: React.FC = () => {
           }
         >
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/live-processing" element={<LiveProcessing />} />
           <Route path="/records" element={<LandRecordsList />} />
           <Route path="/records/:id" element={<LandRecordDetail />} />
           <Route path="/upload" element={<DocumentUpload />} />
@@ -121,8 +114,6 @@ const App: React.FC = () => {
             ========================================== */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-        </motion.div>
-      </AnimatePresence>
 
     </>
     </MotionConfig>

@@ -69,7 +69,45 @@
 .dashboard-stat-card {
   isolation: isolate;
   transform: translateZ(0);
+  border-left-width: 4px;
+  border-top-color: rgb(255 255 255 / 0.9);
+  border-right-color: rgb(255 255 255 / 0.9);
   animation: statCardBreath 5.5s ease-in-out infinite;
+}
+
+.dashboard-stat-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgb(36 43 47 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(36 43 47 / 0.035) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: linear-gradient(135deg, black, transparent 70%);
+  pointer-events: none;
+}
+
+.dashboard-stat-orb {
+  position: absolute;
+  top: -2.75rem;
+  right: -2rem;
+  width: 8rem;
+  height: 8rem;
+  border-radius: 999px;
+  opacity: 0.1;
+  filter: blur(2px);
+  animation: statOrbFloat 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.dashboard-stat-live {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 1.15rem;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  box-shadow: 0 0 0 0 rgb(16 185 129 / 0.35);
+  animation: statLivePulse 2.4s ease-out infinite;
 }
 
 .dashboard-stat-card:nth-child(2n) {
@@ -107,7 +145,8 @@
 .dashboard-stat-icon {
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 0 0 rgb(37 131 238 / 0.15);
+  border: 1px solid rgb(255 255 255 / 0.82);
+  box-shadow: 0 5px 12px -8px currentColor;
   animation: statIconPulse 3.8s ease-in-out infinite;
 }
 
@@ -128,6 +167,16 @@
 @keyframes statCardBreath {
   0%, 100% { box-shadow: 0 8px 18px -18px rgb(36 43 47 / 0.35); }
   50% { box-shadow: 0 16px 26px -20px rgb(36 43 47 / 0.5); }
+}
+
+@keyframes statOrbFloat {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-8px, 7px, 0) scale(1.08); }
+}
+
+@keyframes statLivePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(16 185 129 / 0); }
+  45% { box-shadow: 0 0 0 7px rgb(16 185 129 / 0.16); }
 }
 
 @keyframes statCardSheen {
@@ -157,6 +206,10 @@
   .dashboard-stat-icon,
   .dashboard-stat-icon::after,
   .dashboard-stat-sparkline {
+    animation: none;
+  }
+  .dashboard-stat-orb,
+  .dashboard-stat-live {
     animation: none;
   }
 }

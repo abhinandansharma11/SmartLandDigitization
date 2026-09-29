@@ -20,11 +20,11 @@ import './dashboard.css';
 
 // --- Helper for StatCard Color/Sparkline mapping ---
 const getColorData = (colorClass: string) => {
-  if (colorClass.includes('verified')) return { border: 'border-l-[#10b981]', shadow: 'from-[#10b981]/10 to-transparent', stroke: '#10b981' };
-  if (colorClass.includes('pending')) return { border: 'border-l-[#f59e0b]', shadow: 'from-[#f59e0b]/10 to-transparent', stroke: '#f59e0b' };
-  if (colorClass.includes('error')) return { border: 'border-l-[#ef4444]', shadow: 'from-[#ef4444]/10 to-transparent', stroke: '#ef4444' };
-  if (colorClass.includes('purple')) return { border: 'border-l-[#8b5cf6]', shadow: 'from-[#8b5cf6]/10 to-transparent', stroke: '#8b5cf6' };
-  return { border: 'border-l-[#3b82f6]', shadow: 'from-[#3b82f6]/10 to-transparent', stroke: '#3b82f6' };
+  if (colorClass.includes('verified')) return { border: 'border-l-[#42d94f]', shadow: 'from-[#42d94f]/20 to-transparent', stroke: '#169c38', accent: '#42d94f', soft: '#d9f8d5' };
+  if (colorClass.includes('pending')) return { border: 'border-l-[#d8ff32]', shadow: 'from-[#d8ff32]/25 to-transparent', stroke: '#91a900', accent: '#d8ff32', soft: '#f3ffc2' };
+  if (colorClass.includes('error')) return { border: 'border-l-[#ff8f76]', shadow: 'from-[#ff8f76]/18 to-transparent', stroke: '#d95645', accent: '#ff8f76', soft: '#ffe1d8' };
+  if (colorClass.includes('purple')) return { border: 'border-l-[#b765f2]', shadow: 'from-[#b765f2]/20 to-transparent', stroke: '#8a3dc2', accent: '#b765f2', soft: '#ead5ff' };
+  return { border: 'border-l-[#24252a]', shadow: 'from-[#b765f2]/12 to-transparent', stroke: '#24252a', accent: '#24252a', soft: '#e8e5e1' };
 };
 
 // --- Custom Animated StatCard ---
@@ -36,7 +36,7 @@ const AnimatedStatCard: React.FC<{
   onClick?: () => void;
 }> = ({ title, value, icon, colorClass = 'text-gov-blue', onClick }) => {
   const [count, setCount] = useState(0);
-  const { border, shadow, stroke } = getColorData(colorClass);
+  const { border, shadow, stroke, accent, soft } = getColorData(colorClass);
 
   useEffect(() => {
     const controls = animate(0, value, {
@@ -60,9 +60,12 @@ const AnimatedStatCard: React.FC<{
       transition={{ duration: 0.45, delay: Math.min(value / 100000, 0.35) }}
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
       onClick={onClick}
-      className={`dashboard-stat-card bg-white rounded-xl p-5 border-y border-r border-border-default ${border} relative overflow-hidden group cursor-pointer hover:shadow-card-hover transition-shadow`}
+      style={{ background: `linear-gradient(135deg, ${soft} 0%, #fffdf9 72%, #ffffff 100%)` }}
+      className={`dashboard-stat-card rounded-xl p-5 border-y border-r border-border-default ${border} relative overflow-hidden group cursor-pointer hover:shadow-card-hover transition-shadow`}
     >
       <div className={`absolute inset-0 bg-gradient-to-r ${shadow} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
+      <div className="dashboard-stat-grid" aria-hidden="true" />
+      <div className="dashboard-stat-orb" style={{ background: accent }} aria-hidden="true" />
       <div className="dashboard-stat-sheen" aria-hidden="true" />
       
       <div className="flex justify-between items-start mb-1 relative z-10">
@@ -72,7 +75,7 @@ const AnimatedStatCard: React.FC<{
             {count.toLocaleString()}
           </h3>
         </div>
-        <div className={`dashboard-stat-icon p-2 rounded-lg bg-gray-50 ${colorClass}`}>
+        <div className={`dashboard-stat-icon p-2 rounded-lg ${colorClass}`} style={{ backgroundColor: `${soft}` }}>
           <motion.span
             animate={{ y: [0, -3, 0], rotate: [0, 4, 0] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -90,6 +93,7 @@ const AnimatedStatCard: React.FC<{
            </LineChart>
          </ResponsiveContainer>
       </div>
+      <span className="dashboard-stat-live" style={{ backgroundColor: accent }} aria-label="Live data" />
     </motion.div>
   );
 };
@@ -193,7 +197,7 @@ const toneClasses: Record<string, string> = {
   red: 'text-red-300 border-red-400/30 bg-red-400/10',
 };
 
-const CommandCenter: React.FC = () => {
+export const CommandCenter: React.FC = () => {
   const [queue, setQueue] = useState(INITIAL_QUEUE);
   const [scanProgress, setScanProgress] = useState(68);
 
@@ -316,15 +320,31 @@ const Dashboard: React.FC = () => {
   return (
     <div className="animate-fade-in space-y-6 pb-12">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Dashboard</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Welcome back, {user?.name} · {ROLE_LABELS[user?.role as UserRole]}
-          {user?.jurisdiction.district && ` · ${user.jurisdiction.district}`}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary">Dashboard</h1>
+          <p className="text-sm text-text-secondary mt-1">
+            Welcome back, {user?.name} · {ROLE_LABELS[user?.role as UserRole]}
+            {user?.jurisdiction.district && ` · ${user.jurisdiction.district}`}
+          </p>
+        </div>
+        <div className="group relative">
+          <button
+            type="button"
+            onClick={() => navigate('/live-processing')}
+            aria-label="Open Stats for nerds"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border-default bg-white text-gov-blue shadow-sm transition hover:border-gov-blue hover:bg-gov-blue-50"
+          >
+            <Activity className="h-5 w-5" />
+          </button>
+          <span
+            role="tooltip"
+            className="pointer-events-none absolute right-0 top-full z-20 mt-2 whitespace-nowrap rounded-md bg-navy-950 px-2.5 py-1.5 text-xs font-semibold text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+          >
+            Stats for nerds
+          </span>
+        </div>
       </div>
-
-      <CommandCenter />
 
       {/* Stat Cards Row 1 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
