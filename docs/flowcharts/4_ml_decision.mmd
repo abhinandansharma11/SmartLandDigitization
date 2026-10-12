@@ -1,0 +1,46 @@
+flowchart LR
+    %% ---------- Part 3b: ML · Model Deployment, Decision Routing, Training Loop ----------
+    SIG(["Signals from pipeline<br/>OCR · NER · Validation ·<br/>Forensics"]):::user
+
+    subgraph MD["MODEL DEPLOYMENT"]
+        direction TB
+        FUS["🧠 Features Fusion<br/><small>all signals → Transformer<br/>interaction blocks<br/>(XGBoost for prototype)</small>"]:::box
+        INF["Inference Server<br/><small>+ A/B testing & monitoring</small>"]:::box
+        K8S["Kubernetes Deployment"]:::box
+        REG["MLflow Model Registry"]:::box
+        REG --> K8S --> INF --> FUS
+    end
+
+    subgraph DR["DECISION ROUTING · confidence + integrity thresholds"]
+        direction TB
+        Q{"High confidence and<br/>no integrity risk?"}:::decide
+        AUTO["✅ Auto-Approval<br/><small>record → Verified</small>"]:::good
+        RE["🔁 Adaptive Routing<br/><small>re-OCR check +<br/>officer correction required</small>"]:::warn
+        HITL["👤 HITL Review<br/><small>officer approves / corrects<br/>with confidence + evidence</small>"]:::warn
+        Q -->|"yes"| AUTO
+        Q -->|"no"| RE --> HITL
+    end
+
+    subgraph TL["♾️ CONTINUOUS TRAINING LOOP"]
+        direction TB
+        LD[("Labelled Dataset<br/><small>every officer correction</small>")]:::store
+        RT["Model Registry Update<br/>and Retraining"]:::loop
+        LD --> RT
+    end
+
+    VR(["✅ Verified<br/>Land Record"]):::user
+
+    SIG ==> MD ==> DR ==> VR
+    DR -.->|"corrections"| TL
+    TL -.->|"new model version"| MD
+
+    classDef user fill:#f15a3b,stroke:#333,color:#fff,font-weight:bold
+    classDef box fill:#ffd966,stroke:#333,color:#111
+    classDef decide fill:#ff8c4b,stroke:#333,color:#111,font-weight:bold
+    classDef good fill:#b6e3a8,stroke:#333,color:#111,font-weight:bold
+    classDef warn fill:#ffd966,stroke:#333,color:#111,font-weight:bold
+    classDef store fill:#d9d9d9,stroke:#333,color:#111
+    classDef loop fill:#d9d9d9,stroke:#333,color:#111,font-weight:bold
+    style MD fill:#fff2cc,stroke:#333
+    style DR fill:#fff2cc,stroke:#333
+    style TL fill:#f3f3f3,stroke:#333

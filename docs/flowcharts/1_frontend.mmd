@@ -1,0 +1,30 @@
+flowchart TB
+    %% ---------- Part 1: Users and Frontend ----------
+    RO(["👤 Revenue Officer"]):::user
+    CZ(["👥 Citizens"]):::user
+    SSO["🔑 OIDC SSO<br/><small>Single sign-on · role + jurisdiction in token</small>"]:::gate
+
+    RO --> SSO
+    CZ -->|"public search<br/>(no login)"| SPA
+    SSO --> SPA
+
+    subgraph FE["FRONTEND · React SPA + Tailwind"]
+        direction TB
+        SPA["React Single-Page App"]:::head
+        UP["📤 Stakeholder Bulk Uploads<br/>RoR · Mutation · Maps<br/>PDF / JPG / PNG, chunked to S3"]:::box
+        DASH["📊 Processing Dashboard<br/>live status over WebSocket"]:::box
+        GIS["🗺️ GIS Map<br/>Leaflet + WMS parcel layers"]:::box
+        HITL["✍️ HITL Review Editor<br/>scan beside fields, officer<br/>confirms / corrects"]:::box
+        CIT["🔎 Citizen Portal<br/>search published records,<br/>Record of Rights extract"]:::box
+        SPA --> UP & DASH & GIS & HITL & CIT
+    end
+
+    UP -->|"large files go<br/>straight to storage"| S3[("S3 Storage<br/>original scans")]:::store
+    FE ==>|"REST API calls"| API["API Gateway → Backend"]:::gate
+
+    classDef user fill:#f15a3b,stroke:#333,color:#fff,font-weight:bold
+    classDef gate fill:#d9d9d9,stroke:#333,color:#111,font-weight:bold
+    classDef head fill:#ff8c4b,stroke:#333,color:#111,font-weight:bold
+    classDef box fill:#ffd966,stroke:#333,color:#111
+    classDef store fill:#d9d9d9,stroke:#333,color:#111
+    style FE fill:#fff2cc,stroke:#333

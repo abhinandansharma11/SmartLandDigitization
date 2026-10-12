@@ -1,0 +1,13 @@
+services:
+  bhu-digitize:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - bhu-data:/data
+    environment:
+      JWT_SECRET: "replace-with-a-long-random-string-for-anything-but-a-demo"
+      QA_SAMPLE_RATE: "0.05"
+      # LRMS_BASE_URL: "https://lrms.example.gov.in/api"   # real adapters instead of mocks
+volumes:
+  bhu-data:

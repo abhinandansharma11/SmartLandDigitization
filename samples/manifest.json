@@ -1,0 +1,35 @@
+{
+  "note": "Batch manifest for the vendor bulk-upload endpoint (POST /api/v1/batches).",
+  "map_gcp": {
+    "09_map_bahadurpur_sheet.png": {
+      "frame_px": [
+        150,
+        200,
+        1504,
+        2189
+      ],
+      "bbox": [
+        80.72,
+        26.93,
+        80.726,
+        26.9345
+      ]
+    }
+  },
+  "files": [
+    {
+      "file": "01_khatauni_rampur_khata45_clean.png",
+      "district": "Lucknow",
+      "tehsil": "Malihabad",
+      "village_lgd": "900001",
+      "doc_type_hint": "khatauni"
+    },
+    {
+      "file": "03_khatauni_rampur_khata46_old_bigha.jpg",
+      "district": "Lucknow",
+      "tehsil": "Malihabad",
+      "village_lgd": "900001",
+      "year": "1398"
+    }
+  ]
+}

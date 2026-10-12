@@ -1,0 +1,37 @@
+flowchart LR
+    %% ---------- Part 3a: ML · Document Pipeline ----------
+    IN(["📄 Scanned page<br/>from job queue"]):::user
+
+    subgraph S1["1 · CLEAN & LOCATE"]
+        direction TB
+        PRE["🧹 Preprocessing · OpenCV<br/><small>deskew · adaptive binarize ·<br/>contrast-sharpness · crop · page split</small>"]:::box
+        SPA["🔲 Spatial Analysis · YOLOv8<br/><small>find tables, fields,<br/>stamps, map regions</small>"]:::box
+        PRE --> SPA
+    end
+
+    subgraph S2["2 · READ"]
+        direction TB
+        OCR["🔤 OCR-HTR<br/><small>printed + handwritten ·<br/>multilingual script router ·<br/>IndicOCR / Indic TrOCR</small>"]:::box
+        POST["✏️ Post-OCR Correction<br/>IndicBART<br/><small>fix misread characters</small>"]:::box
+        OCR --> POST
+    end
+
+    subgraph S3["3 · UNDERSTAND & CHECK"]
+        direction TB
+        NER["🏷️ NER Extraction · IndicBERTv2<br/><small>owner · relation · khasra ·<br/>area · share · village</small>"]:::box
+        VAL["📋 Validation Engine<br/><small>business rules +<br/>explainable confidence scoring</small>"]:::box
+        NER --> VAL
+    end
+
+    FOR["🕵️ Forgery Analysis<br/><small>ELA · noise · LBP texture ·<br/>copy-move · font consistency ·<br/>region tampering</small>"]:::box
+
+    OUTN(["🧠 Features Fusion<br/>→ Decision Routing"]):::user
+
+    IN ==> S1 ==> S2 ==> S3 ==> OUTN
+    S1 -.->|"image signals"| FOR ==> OUTN
+
+    classDef user fill:#f15a3b,stroke:#333,color:#fff,font-weight:bold
+    classDef box fill:#ffd966,stroke:#333,color:#111
+    style S1 fill:#fff2cc,stroke:#333
+    style S2 fill:#fff2cc,stroke:#333
+    style S3 fill:#fff2cc,stroke:#333

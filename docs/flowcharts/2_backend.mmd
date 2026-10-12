@@ -1,0 +1,46 @@
+flowchart LR
+    %% ---------- Part 2: API, Backend and Data ----------
+    FE(["React SPA<br/>officer + citizen portal"]):::user
+
+    subgraph BE["API & BACKEND FLOW"]
+        direction TB
+        KONG["🦍 KONG · API Gateway<br/><small>auth check · rate limit · routing</small>"]:::box
+        FAST["⚡ FastAPI Backend<br/><small>REST APIs · role + jurisdiction checks</small>"]:::box
+        TEMP["⏱️ Temporal Orchestrator<br/><small>document state machine<br/>Received → Clean → Classify →<br/>Extract → Validate → Route</small>"]:::box
+        REDIS["📮 Redis Streams<br/><small>async job queue + dead-letter queue</small>"]:::box
+        KONG --> FAST --> TEMP --> REDIS
+    end
+
+    ML["🤖 Document Pipeline<br/>ML part"]:::head
+
+    subgraph OUT["AFTER A RECORD IS VERIFIED"]
+        direction TB
+        VR["✅ Verified Land Record<br/><small>final structured record + status</small>"]:::good
+        EP["📍 Entity & Parcel Linking<br/><small>Khasra ↔ Village ↔ Owner + ULPIN</small>"]:::box
+        INT["🔗 Database & GIS Integration<br/><small>LRMS · DILRMP · GIS APIs</small>"]:::box
+        BC["⛓️ Tamper-Evident Audit Trail<br/><small>approved change → hash + metadata</small>"]:::box
+        VR --> EP --> INT
+        VR --> BC
+    end
+
+    subgraph DATA["STORAGE"]
+        direction TB
+        S3[("S3 · original scans<br/><small>write-once, SHA-256</small>")]:::store
+        PG[("PostgreSQL + PostGIS<br/><small>records · parcels</small>")]:::store
+        OS[("OpenSearch<br/><small>search in any script</small>")]:::store
+        S3 ~~~ PG --> OS
+    end
+
+    FE ==> BE
+    BE ==>|"one job<br/>per page"| ML
+    ML ==>|"approved"| OUT
+    OUT -.->|"saved to"| DATA
+
+    classDef user fill:#f15a3b,stroke:#333,color:#fff,font-weight:bold
+    classDef head fill:#f15a3b,stroke:#333,color:#fff,font-weight:bold
+    classDef box fill:#ffd966,stroke:#333,color:#111
+    classDef good fill:#b6e3a8,stroke:#333,color:#111,font-weight:bold
+    classDef store fill:#d9d9d9,stroke:#333,color:#111
+    style BE fill:#fff2cc,stroke:#333
+    style DATA fill:#f3f3f3,stroke:#333
+    style OUT fill:#fff2cc,stroke:#333
